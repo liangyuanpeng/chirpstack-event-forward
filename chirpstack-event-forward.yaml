@@ -1,0 +1,18 @@
+general:
+  http:
+    port: 8080
+config:
+  - name: ""
+    chirpstack:
+      account: ""
+      password: ""
+      url: ""
+    integrations:
+      mqtt:
+        topic_template: ""
+        url: ""
+        clientId:
+        qos: 0
+      pulsar:
+        topic:  ""
+        url: ""
