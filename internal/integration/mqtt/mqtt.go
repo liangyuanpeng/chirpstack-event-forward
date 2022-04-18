@@ -1,12 +1,14 @@
 package mqtt
 
 import (
+	"bytes"
 	"context"
-	"fmt"
+	"errors"
+	"html/template"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	"github.com/liangyuanpeng/chirpstack-forward/internal/config"
+	"github.com/liangyuanpeng/chirpstack-event-forward/internal/config"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -18,6 +20,10 @@ type Integration struct {
 }
 
 func New(config config.MqttConfig) (*Integration, error) {
+
+	if config.Enabled && config.Url == "" {
+		return nil, errors.New("integration/mqtt: empty url|")
+	}
 
 	i := &Integration{
 		config: config,
@@ -41,7 +47,18 @@ func New(config config.MqttConfig) (*Integration, error) {
 	return i, nil
 }
 
-func (i *Integration) HandleEvent(ctx context.Context, data []byte) error {
+func (i *Integration) HandleEvent(ctx context.Context, vars map[string]string, data []byte) error {
+	t := template.New("Person template")
+	tem, err := t.Parse(i.config.TopicTemplate)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	buf := new(bytes.Buffer)
+	tem.Execute(buf, vars)
+	log.Println("topic.is:", string(buf.Bytes()))
+
 	if token := i.conn.Publish(i.topic, i.config.QOS, false, data); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
@@ -49,8 +66,6 @@ func (i *Integration) HandleEvent(ctx context.Context, data []byte) error {
 }
 
 func (i *Integration) Close() error {
-	if token := i.conn.Unsubscribe(i.topic); token.Wait() && token.Error() != nil {
-		return fmt.Errorf("integration/mqtt: unsubscribe from %s error: %s", i.topic, token.Error())
-	}
+	i.conn.Disconnect(1000)
 	return nil
 }

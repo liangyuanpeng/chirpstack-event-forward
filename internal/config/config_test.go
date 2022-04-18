@@ -9,7 +9,7 @@ import (
 const templ = `
 name is {{.name}}
 Company is {{.resources.Company}}
-smartoilets-{{ .customerName }}/application/{{ .appid }}/device/{{ .devEUI }}/{{ .event }}
+{{ .customerName }}/application/{{ .appid }}/device/{{ .devEUI }}/{{ .event }}
 `
 
 func Test_Templat(test *testing.T) {

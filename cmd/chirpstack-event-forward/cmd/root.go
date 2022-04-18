@@ -3,15 +3,18 @@ package cmd
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
 	asintegration "github.com/brocaar/chirpstack-api/go/v3/as/integration"
 	"github.com/gogo/protobuf/jsonpb"
-	"github.com/liangyuanpeng/chirpstack-forward/internal/config"
-	"github.com/liangyuanpeng/chirpstack-forward/internal/integration"
-	"github.com/liangyuanpeng/chirpstack-forward/internal/integration/mqtt"
+	"github.com/golang/protobuf/proto"
+
+	"github.com/liangyuanpeng/chirpstack-event-forward/internal/config"
+	"github.com/liangyuanpeng/chirpstack-event-forward/internal/integration"
+	"github.com/liangyuanpeng/chirpstack-event-forward/internal/integration/mqtt"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -28,8 +31,6 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "path to configuration file (optional)")
-	rootCmd.PersistentFlags().Int("log-level", 4, "debug=5, info=4, error=2, fatal=1, panic=0")
 }
 
 var cfgFile string
@@ -63,12 +64,12 @@ func initConfig() {
 	} else {
 		viper.SetConfigName("chirpstack-event-forward")
 		viper.AddConfigPath(".")
-		viper.AddConfigPath("$HOME/.config/cchirpstack-event-forward")
+		viper.AddConfigPath("$HOME/.config/chirpstack-event-forward")
 		viper.AddConfigPath("/etc/chirpstack-event-forward")
 		if err := viper.ReadInConfig(); err != nil {
 			switch err.(type) {
 			case viper.ConfigFileNotFoundError:
-				log.Warning("No configuration file found, using defaults. See: https://www.chirpstack.io/network-server/install/config/")
+				log.Warning("No configuration file found, using defaults. ")
 			default:
 				log.WithError(err).Fatal("read configuration file error")
 			}
@@ -79,7 +80,6 @@ func initConfig() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("config.C:", config.C.Forwards)
 
 	initIntegration()
 
@@ -88,7 +88,7 @@ func initConfig() {
 var inte integration.Integration
 
 func initIntegration() {
-	mqttI, err := mqtt.New(config.C.Forwards[0].Integrations.Mqtt)
+	mqttI, err := mqtt.New(config.C.Config[0].Integrations.Mqtt)
 	if err != nil {
 		log.WithError(err).Fatalln("new mqtt integration failed!")
 	}
@@ -108,18 +108,6 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	headerMap := make(map[string]string)
-	for name, values := range r.Header {
-		// Loop over all values for the name.
-		for _, value := range values {
-			fmt.Println(name, value)
-		}
-		headerMap[name] = values[0]
-	}
-	headerMap["event"] = event
-	headerMap["appid"] = ""
-	headerMap["devEUI"] = ""
-
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.WithError(err).Println("read request body failed!")
@@ -129,13 +117,55 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Error("have not request body!")
 		return
 	}
-	var asevent asintegration.IntegrationEvent
-	unmarshaler := &jsonpb.Unmarshaler{
-		AllowUnknownFields: true, 
+
+	headerMap := make(map[string]string)
+	for name, values := range r.Header {
+		headerMap[name] = values[0]
 	}
-	err = unmarshaler.Unmarshal(bytes.NewReader(b), &asevent)
+	headerMap["event"] = event
+	switch event {
+	case "up":
+		err = h.up(b, headerMap)
+	case "join":
+		err = h.join(b, headerMap)
+	}
 	if err != nil {
-		panic(err)
+		log.WithError(err).Println("read request body failed!")
+		return
 	}
-	inte.HandleEvent(context.TODO(), b)
+
+	inte.HandleEvent(context.TODO(), headerMap, b)
+}
+
+func (h *handler) up(b []byte, vars map[string]string) error {
+	var up asintegration.UplinkEvent
+	if err := h.unmarshal(b, &up); err != nil {
+		return err
+	}
+	vars["appid"] = fmt.Sprintf("%d", up.ApplicationId)
+	vars["devEUI"] = hex.EncodeToString(up.DevEui)
+	log.Printf("Uplink received from %s with payload: %s", hex.EncodeToString(up.DevEui), hex.EncodeToString(up.Data))
+	return nil
+}
+
+func (h *handler) join(b []byte, vars map[string]string) error {
+	var join asintegration.JoinEvent
+	if err := h.unmarshal(b, &join); err != nil {
+		return err
+	}
+	vars["appid"] = fmt.Sprintf("%d", join.ApplicationId)
+	vars["devEUI"] = hex.EncodeToString(join.DevEui)
+
+	log.Printf("Device %s joined with DevAddr %s", hex.EncodeToString(join.DevEui), hex.EncodeToString(join.DevAddr))
+	return nil
+}
+
+func (h *handler) unmarshal(b []byte, v proto.Message) error {
+	if h.json {
+		unmarshaler := &jsonpb.Unmarshaler{
+			AllowUnknownFields: true, // we don't want to fail on unknown fields
+		}
+		return unmarshaler.Unmarshal(bytes.NewReader(b), v)
+	}
+	return proto.Unmarshal(b, v)
 }

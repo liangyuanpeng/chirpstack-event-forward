@@ -7,7 +7,7 @@ type RootConfig struct {
 
 	General GeneralConfig `yaml:"general"`
 
-	Forwards []ForwardConfig `yaml:"config"`
+	Config []ForwardConfig `yaml:"config"`
 }
 
 type GeneralConfig struct {
@@ -35,7 +35,8 @@ type IntegrationsConfig struct {
 }
 
 type MqttConfig struct {
-	TopicTemplate string `yaml:"topic_template"`
+	Enabled       bool   `yaml:"enabled"`
+	TopicTemplate string `yaml:"topicTemplate"`
 	Url           string `yaml:"url"`
 	Username      string `yaml:"username"`
 	Password      string `yaml:"password"`
