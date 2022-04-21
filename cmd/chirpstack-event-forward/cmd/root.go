@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -35,10 +36,19 @@ func init() {
 
 var cfgFile string
 
+type EventData struct {
+	ApplicationID string `json:"applicationID"`
+	DevEUI        []byte `json:"devEUI"`
+	FPort         int    `json:"fPort"`
+	FCnt          int    `json:"fCnt"`
+	DevAddr       []byte `json:devAddr`
+}
+
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}
+
 	fmt.Println("&config.C.General.Http.Port:", config.C.General.Http.Port)
 	listener := fmt.Sprintf(":%d", config.C.General.Http.Port)
 	log.WithField("listener", listener).Info("started event forward!")
@@ -130,42 +140,55 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		err = h.join(b, headerMap)
 	}
 	if err != nil {
-		log.WithError(err).Println("read request body failed!")
+		log.WithError(err).Println("parse request body to proto failed!", "event", event)
 		return
 	}
 
-	inte.HandleEvent(context.TODO(), headerMap, b)
+	go func() {
+		err := inte.HandleEvent(context.TODO(), headerMap, b)
+		if err != nil {
+			log.WithError(err).Println("handle event failed!", "event", event)
+		}
+	}()
+
 }
 
 func (h *handler) up(b []byte, vars map[string]string) error {
 	var up asintegration.UplinkEvent
-	if err := h.unmarshal(b, &up); err != nil {
+	var event EventData
+	if err := h.unmarshal(b, &up, &event); err != nil {
+		log.Println("unmarshal.up.failed!")
 		return err
 	}
-	vars["appid"] = fmt.Sprintf("%d", up.ApplicationId)
-	vars["devEUI"] = hex.EncodeToString(up.DevEui)
-	log.Printf("Uplink received from %s with payload: %s", hex.EncodeToString(up.DevEui), hex.EncodeToString(up.Data))
+	vars["appid"] = event.ApplicationID
+	vars["devEUI"] = hex.EncodeToString(event.DevEUI)
+	log.Println("Received up event!", "device", hex.EncodeToString(event.DevEUI))
 	return nil
 }
 
 func (h *handler) join(b []byte, vars map[string]string) error {
 	var join asintegration.JoinEvent
-	if err := h.unmarshal(b, &join); err != nil {
+	var event EventData
+	if err := h.unmarshal(b, &join, &event); err != nil {
 		return err
 	}
-	vars["appid"] = fmt.Sprintf("%d", join.ApplicationId)
-	vars["devEUI"] = hex.EncodeToString(join.DevEui)
-
-	log.Printf("Device %s joined with DevAddr %s", hex.EncodeToString(join.DevEui), hex.EncodeToString(join.DevAddr))
+	vars["appid"] = event.ApplicationID
+	vars["devEUI"] = hex.EncodeToString(event.DevEUI)
+	log.Println("Received join event!", "device", hex.EncodeToString(event.DevEUI), "devaddr", hex.EncodeToString(event.DevAddr))
 	return nil
 }
 
-func (h *handler) unmarshal(b []byte, v proto.Message) error {
+func (h *handler) unmarshal(b []byte, v proto.Message, event *EventData) error {
 	if h.json {
-		unmarshaler := &jsonpb.Unmarshaler{
-			AllowUnknownFields: true, // we don't want to fail on unknown fields
+		if event != nil {
+			return json.Unmarshal(b, event)
+		} else {
+			unmarshaler := &jsonpb.Unmarshaler{
+				AllowUnknownFields: true, // we don't want to fail on unknown fields
+			}
+			return unmarshaler.Unmarshal(bytes.NewReader(b), v)
 		}
-		return unmarshaler.Unmarshal(bytes.NewReader(b), v)
+
 	}
 	return proto.Unmarshal(b, v)
 }

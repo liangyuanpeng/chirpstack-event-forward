@@ -14,9 +14,10 @@ import (
 
 // Integration implements an Mqtt integration.
 type Integration struct {
-	conn   mqtt.Client
-	config config.MqttConfig
-	topic  string
+	conn          mqtt.Client
+	config        config.MqttConfig
+	topic         string
+	topicTemplate *template.Template
 }
 
 func New(config config.MqttConfig) (*Integration, error) {
@@ -25,8 +26,15 @@ func New(config config.MqttConfig) (*Integration, error) {
 		return nil, errors.New("integration/mqtt: empty url|")
 	}
 
+	t := template.New("Person template")
+	tem, err := t.Parse(config.TopicTemplate)
+	if err != nil {
+		return nil, err
+	}
+
 	i := &Integration{
-		config: config,
+		config:        config,
+		topicTemplate: tem,
 	}
 
 	opts := mqtt.NewClientOptions()
@@ -48,16 +56,11 @@ func New(config config.MqttConfig) (*Integration, error) {
 }
 
 func (i *Integration) HandleEvent(ctx context.Context, vars map[string]string, data []byte) error {
-	t := template.New("Person template")
-	tem, err := t.Parse(i.config.TopicTemplate)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
 
 	buf := new(bytes.Buffer)
-	tem.Execute(buf, vars)
-	log.Println("topic.is:", string(buf.Bytes()))
+	i.topicTemplate.Execute(buf, vars)
+
+	log.Infof("integration/mqtt: topic: %s", buf.Bytes())
 
 	if token := i.conn.Publish(i.topic, i.config.QOS, false, data); token.Wait() && token.Error() != nil {
 		return token.Error()

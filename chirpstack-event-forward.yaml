@@ -2,7 +2,7 @@ general:
   http:
     port: 8080
 config:
-  - name: "test"
+  - name: ""
     chirpstack:
       account: ""
       password: ""
@@ -10,9 +10,9 @@ config:
     integrations:
       mqtt:
         enabled: true
-        topicTemplate: "{{ .customerName }}/application/{{ .appid }}/device/{{ .devEUI }}/{{ .event }}"
+        topicTemplate: "{{ .customername }}/application/{{ .appid }}/device/{{ .devEUI }}/{{ .event }}"
         url: ""
-        clientId: test
+        clientId: ""
         qos: 1
         username: ""
         password: ""
