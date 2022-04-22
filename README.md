@@ -1,1 +1,4 @@
-{"applicationID":"199","applicationName":"LCSD_HkccTwscSmartToilet_2020-HKCC","deviceName":"YUNH-YunhornIndicativeLED-YauTsimMong-HKCC-0044","devEUI":"////EAAB7xU=","rxInfo":[{"gatewayID":"AIAAAKAAadA=","time":null,"timeSinceGPSEpoch":null,"rssi":-113,"loRaSNR":-1.2,"channel":6,"rfChain":1,"board":0,"antenna":0,"location":{"latitude":22.3707136,"longitude":114.11456,"altitude":0,"source":"UNKNOWN","accuracy":0},"fineTimestampType":"NONE","context":"srsxnA==","uplinkID":"jdREauqqQxa+eX7NDJrX0w==","crcStatus":"CRC_OK"}],"txInfo":{"frequency":924400000,"modulation":"LORA","loRaModulationInfo":{"bandwidth":125,"spreadingFactor":10,"codeRate":"4/5","polarizationInversion":false}},"adr":false,"dr":2,"fCnt":1599,"fPort":5,"data":"AQM=","objectJSON":"","tags":{},"confirmedUplink":false,"devAddr":"AIovdQ==","publishedAt":"2022-04-19T08:40:05.511572445Z","deviceProfileID":"3248182c-96fd-481a-88da-cb68e45d0f4d","deviceProfileName":"default-device-profile"}
+# chirpstack-event-forward  
+
+
+forward chirpstack event data from chirpstack application http integration
