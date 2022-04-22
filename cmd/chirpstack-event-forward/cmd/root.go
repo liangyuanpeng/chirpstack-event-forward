@@ -17,6 +17,7 @@ import (
 	"github.com/liangyuanpeng/chirpstack-event-forward/internal/integration"
 	"github.com/liangyuanpeng/chirpstack-event-forward/internal/integration/mqtt"
 	"github.com/liangyuanpeng/chirpstack-event-forward/internal/integration/pulsar"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -53,7 +54,9 @@ func Execute() {
 	fmt.Println("&config.C.General.Http.Port:", config.C.General.Http.Port)
 	listener := fmt.Sprintf(":%d", config.C.General.Http.Port)
 	log.WithField("listener", listener).Info("started event forward!")
-	err := http.ListenAndServe(listener, &handler{json: true})
+	http.Handle("/api", &handler{json: true})
+	http.Handle("/metrics", promhttp.Handler())
+	err := http.ListenAndServe(listener, nil)
 	if err != nil {
 		log.WithError(err).Fatal("start http server failed!")
 	}
