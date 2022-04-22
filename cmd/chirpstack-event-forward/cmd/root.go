@@ -16,6 +16,7 @@ import (
 	"github.com/liangyuanpeng/chirpstack-event-forward/internal/config"
 	"github.com/liangyuanpeng/chirpstack-event-forward/internal/integration"
 	"github.com/liangyuanpeng/chirpstack-event-forward/internal/integration/mqtt"
+	"github.com/liangyuanpeng/chirpstack-event-forward/internal/integration/pulsar"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -100,12 +101,22 @@ func initConfig() {
 
 var inte integration.Integration
 
+var integrations []integration.Integration
+
 func initIntegration() {
 	mqttI, err := mqtt.New(config.C.Config[0].Integrations.Mqtt)
 	if err != nil {
 		log.WithError(err).Fatalln("new mqtt integration failed!")
 	}
 	inte = mqttI
+	integrations = append(integrations, mqttI)
+
+	pulsarI, err := pulsar.New(config.C.Config[0].Integrations.Pulsar)
+	if err == nil {
+		integrations = append(integrations, pulsarI)
+	} else {
+		log.WithError(err).Fatalln("new pulsar integration failed!")
+	}
 }
 
 type handler struct {
@@ -148,9 +159,12 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go func() {
-		err := inte.HandleEvent(context.TODO(), headerMap, b)
-		if err != nil {
-			log.WithError(err).Println("handle event failed!", "event", event)
+
+		for _, i := range integrations {
+			err := i.HandleEvent(context.TODO(), headerMap, b)
+			if err != nil {
+				log.WithError(err).Println("handle event failed!", "event", event)
+			}
 		}
 	}()
 

@@ -31,7 +31,8 @@ type ChirpstackConfig struct {
 }
 
 type IntegrationsConfig struct {
-	Mqtt MqttConfig `yaml:"mqtt"`
+	Mqtt   MqttConfig   `yaml:"mqtt"`
+	Pulsar PulsarConfig `yaml:pulsar`
 }
 
 type MqttConfig struct {
@@ -42,4 +43,10 @@ type MqttConfig struct {
 	Password      string `yaml:"password"`
 	ClientId      string `yaml:"clientId"`
 	QOS           uint8  `yaml:"qos"`
+}
+
+type PulsarConfig struct {
+	Enabled       bool   `yaml:"enabled"`
+	TopicTemplate string `yaml:"topicTemplate"`
+	Url           string `yaml:"url"`
 }
