@@ -99,8 +99,6 @@ func initConfig() {
 
 }
 
-var inte integration.Integration
-
 var integrations []integration.Integration
 
 func initIntegration() {
@@ -108,15 +106,17 @@ func initIntegration() {
 	if err != nil {
 		log.WithError(err).Fatalln("new mqtt integration failed!")
 	}
-	inte = mqttI
 	integrations = append(integrations, mqttI)
 
-	pulsarI, err := pulsar.New(config.C.Config[0].Integrations.Pulsar)
-	if err == nil {
-		integrations = append(integrations, pulsarI)
-	} else {
-		log.WithError(err).Fatalln("new pulsar integration failed!")
+	if config.C.Config[0].Integrations.Pulsar.Enabled {
+		pulsarI, err := pulsar.New(config.C.Config[0].Integrations.Pulsar)
+		if err == nil {
+			integrations = append(integrations, pulsarI)
+		} else {
+			log.WithError(err).Fatalln("new pulsar integration failed!")
+		}
 	}
+
 }
 
 type handler struct {
@@ -161,9 +161,9 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	go func() {
 
 		for _, i := range integrations {
-			err := i.HandleEvent(context.TODO(), headerMap, b)
+			name, err := i.HandleEvent(context.TODO(), headerMap, b)
 			if err != nil {
-				log.WithError(err).Println("handle event failed!", "event", event)
+				log.WithError(err).Println("handle event failed!", "event", event, "name", name)
 			}
 		}
 	}()

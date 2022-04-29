@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"html/template"
 	"time"
 
@@ -42,6 +43,7 @@ func New(config config.MqttConfig) (*Integration, error) {
 	opts.SetUsername(config.Username)
 	opts.SetPassword(config.Password)
 	opts.SetClientID(config.ClientId)
+	opts.SetDefaultPublishHandler(messagePubHandler)
 
 	i.conn = mqtt.NewClient(opts)
 	for {
@@ -52,10 +54,26 @@ func New(config config.MqttConfig) (*Integration, error) {
 			break
 		}
 	}
+
+	if i.config.DownlinkTopicTemplate != "" {
+		log.Infof("integration/mqtt: subscribing to broker :%s", i.config.DownlinkTopicTemplate)
+		if token := i.conn.Subscribe(i.config.DownlinkTopicTemplate, 1, nil); token.Wait() && token.Error() != nil {
+			log.Errorf("integration/mqtt: subscribing to broker error: %s", token.Error())
+			return i, token.Error()
+		}
+	}
+
 	return i, nil
 }
 
-func (i *Integration) HandleEvent(ctx context.Context, vars map[string]string, data []byte) error {
+var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
+
+	//{"data":"MDE=","fPort":2,"fCnt":1,"confirmed":false}
+
+	fmt.Printf("Received message: %s from topic: %s\n", msg.Payload(), msg.Topic())
+}
+
+func (i *Integration) HandleEvent(ctx context.Context, vars map[string]string, data []byte) (string, error) {
 
 	buf := new(bytes.Buffer)
 	i.topicTemplate.Execute(buf, vars)
@@ -63,9 +81,9 @@ func (i *Integration) HandleEvent(ctx context.Context, vars map[string]string, d
 	log.Infof("integration/mqtt: topic: %s", buf.Bytes())
 
 	if token := i.conn.Publish(i.topic, i.config.QOS, false, data); token.Wait() && token.Error() != nil {
-		return token.Error()
+		return "mqtt", token.Error()
 	}
-	return nil
+	return "mqtt", nil
 }
 
 func (i *Integration) Close() error {

@@ -42,7 +42,7 @@ func New(config config.PulsarConfig) (*Integration, error) {
 	return i, nil
 }
 
-func (i *Integration) HandleEvent(ctx context.Context, vars map[string]string, data []byte) error {
+func (i *Integration) HandleEvent(ctx context.Context, vars map[string]string, data []byte) (string, error) {
 
 	buf := new(bytes.Buffer)
 	i.topicTemplate.Execute(buf, vars)
@@ -59,7 +59,7 @@ func (i *Integration) HandleEvent(ctx context.Context, vars map[string]string, d
 		})
 		if err != nil {
 			i.mutex.Unlock()
-			return err
+			return "pulsar", err
 		}
 		producer = tmp
 		i.producers[topic] = tmp
@@ -70,9 +70,10 @@ func (i *Integration) HandleEvent(ctx context.Context, vars map[string]string, d
 		Payload: data,
 	})
 
-	return err
+	return "pulsar", err
 }
 
 func (i *Integration) Close() error {
+	i.client.Close()
 	return nil
 }

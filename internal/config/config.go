@@ -36,13 +36,14 @@ type IntegrationsConfig struct {
 }
 
 type MqttConfig struct {
-	Enabled       bool   `yaml:"enabled"`
-	TopicTemplate string `yaml:"topicTemplate"`
-	Url           string `yaml:"url"`
-	Username      string `yaml:"username"`
-	Password      string `yaml:"password"`
-	ClientId      string `yaml:"clientId"`
-	QOS           uint8  `yaml:"qos"`
+	Enabled               bool   `yaml:"enabled"`
+	TopicTemplate         string `yaml:"topicTemplate"`
+	Url                   string `yaml:"url"`
+	Username              string `yaml:"username"`
+	Password              string `yaml:"password"`
+	ClientId              string `yaml:"clientId"`
+	QOS                   uint8  `yaml:"qos"`
+	DownlinkTopicTemplate string `yaml:"downlinkTopicTemplate"`
 }
 
 type PulsarConfig struct {
