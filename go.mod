@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/apache/pulsar-client-go v0.8.1
 	github.com/brocaar/chirpstack-api/go/v3 v3.12.5
+	github.com/brocaar/lorawan v0.0.0-20220207095711-d675789e16ab
 	github.com/eclipse/paho.mqtt.golang v1.3.5
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.5.2
@@ -33,6 +34,7 @@ require (
 	github.com/gsterjov/go-libsecret v0.0.0-20161001094733-a6f4afe4910c // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/jacobsa/crypto v0.0.0-20190317225127-9f44e2d11115 // indirect
 	github.com/keybase/go-keychain v0.0.0-20190712205309-48d3d31d256d // indirect
 	github.com/klauspost/compress v1.10.8 // indirect
 	github.com/linkedin/goavro/v2 v2.9.8 // indirect
