@@ -2,11 +2,12 @@ package client
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -15,19 +16,34 @@ var (
 )
 
 type DeviceQueueItem struct {
-	Confirmed  bool
-	Data       string
-	DevEUI     string
-	FCnt       int
-	FPort      int
-	JsonObject string
+	Confirmed  bool   `json:"confirmed"`
+	Data       string `json:"data"`
+	DevEUI     string `json:"devEUI"`
+	FCnt       int    `json:"fCnt"`
+	FPort      int    `json:"fPort"`
+	JsonObject string `json:"jsonObject"`
 }
 
 func DownLink(deviceQueueItem *DeviceQueueItem) error {
-	//TODO token?
-	//TODO url
 	url := ""
-	resp, err := client.Post(url+"/api/devices/"+deviceQueueItem.DevEUI+"/queue", "application/json", strings.NewReader("name=cjb"))
+	token := ""
+	song := make(map[string]interface{})
+	song["deviceQueueItem"] = deviceQueueItem
+
+	marshal, err := json.Marshal(song)
+	if err != nil {
+		return err
+	}
+
+	request, err := http.NewRequest("POST", url+"/api/devices/"+deviceQueueItem.DevEUI+"/queue", bytes.NewReader(marshal))
+	if err != nil {
+		fmt.Println(err.Error())
+		return err
+	}
+	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
+	request.Header.Set("Grpc-Metadata-Authorization", "Bearer "+token)
+
+	resp, err := client.Do(request)
 	if err != nil {
 		return err
 	}
