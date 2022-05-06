@@ -47,7 +47,8 @@ type MqttConfig struct {
 }
 
 type PulsarConfig struct {
-	Enabled       bool   `yaml:"enabled"`
-	TopicTemplate string `yaml:"topicTemplate"`
-	Url           string `yaml:"url"`
+	Enabled              bool   `yaml:"enabled"`
+	TopicTemplate        string `yaml:"topicTemplate"`
+	Url                  string `yaml:"url"`
+	ProducerNameTemplate string `yaml:"producerNameTemplate"`
 }

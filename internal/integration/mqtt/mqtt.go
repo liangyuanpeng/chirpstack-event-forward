@@ -10,6 +10,7 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/liangyuanpeng/chirpstack-event-forward/internal/config"
+	"github.com/liangyuanpeng/chirpstack-event-forward/internal/integration"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -73,7 +74,7 @@ var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Me
 	fmt.Printf("Received message: %s from topic: %s\n", msg.Payload(), msg.Topic())
 }
 
-func (i *Integration) HandleEvent(ctx context.Context, vars map[string]string, data []byte) (string, error) {
+func (i *Integration) HandleEvent(ctx context.Context, ch chan integration.HandleError, vars map[string]string, data []byte) (string, error) {
 
 	buf := new(bytes.Buffer)
 	i.topicTemplate.Execute(buf, vars)
