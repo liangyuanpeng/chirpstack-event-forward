@@ -9,7 +9,7 @@ func Test_Downlink(t *testing.T) {
 		panic(err)
 	}
 
-	err = c.downLink(&DeviceQueueItem{
+	err = c.DownLink(&DeviceQueueItem{
 		Confirmed: false,
 		DevEUI:    "ffffff100003717d",
 		FPort:     36,
