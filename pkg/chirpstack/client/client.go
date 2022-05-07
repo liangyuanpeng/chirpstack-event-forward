@@ -25,21 +25,21 @@ type DeviceQueueItem struct {
 }
 
 type ChirpstackClient struct {
-	Url      string
-	ApiToken string
+	Url   string
+	Token string
 }
 
-func New(url, apitoken string) (*ChirpstackClient, error) {
-	if url == "" || apitoken == "" {
+func New(url, token string) (*ChirpstackClient, error) {
+	if url == "" || token == "" {
 		return nil, errors.New("url or apitoken is empty")
 	}
 	return &ChirpstackClient{
-		Url:      url,
-		ApiToken: apitoken,
+		Url:   url,
+		Token: token,
 	}, nil
 }
 
-func (c *ChirpstackClient) downLink(deviceQueueItem *DeviceQueueItem) error {
+func (c *ChirpstackClient) DownLink(deviceQueueItem *DeviceQueueItem) error {
 	song := make(map[string]interface{})
 	song["deviceQueueItem"] = deviceQueueItem
 
@@ -54,7 +54,7 @@ func (c *ChirpstackClient) downLink(deviceQueueItem *DeviceQueueItem) error {
 		return err
 	}
 	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
-	request.Header.Set("Grpc-Metadata-Authorization", "Bearer "+c.ApiToken)
+	request.Header.Set("Grpc-Metadata-Authorization", "Bearer "+c.Token)
 
 	resp, err := client.Do(request)
 	if err != nil {

@@ -29,7 +29,7 @@ type ProducerGroup struct {
 
 func New(config config.PulsarConfig, chirpstackClient *client.ChirpstackClient) (*Integration, error) {
 
-	t := template.New("Person template")
+	t := template.New("pulsar topic template")
 	tem, err := t.Parse(config.TopicTemplate)
 	if err != nil {
 		return nil, err
@@ -49,6 +49,9 @@ func New(config config.PulsarConfig, chirpstackClient *client.ChirpstackClient) 
 	if err != nil {
 		return nil, err
 	}
+
+	//TODO create consumer for downlink
+
 	i := &Integration{
 		client:               client,
 		topicTemplate:        tem,

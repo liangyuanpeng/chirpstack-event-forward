@@ -15,7 +15,10 @@ config:
         qos: 1
         username: ""
         password: ""
+        downlinkTopic: "downlink/commond/down"
       pulsar:
         enabled: false
         topicTemplate: "application/{{ .appid }}/device/{{ .devEUI }}/{{ .event }}"
         producerNameTemplate: "chirpstack-{{ .appid }}"
+        downlinkTopic: "downlink/commond/down"
+

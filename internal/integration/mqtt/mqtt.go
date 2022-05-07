@@ -3,6 +3,7 @@ package mqtt
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -30,7 +31,7 @@ func New(config config.MqttConfig, chirpstackClient *client.ChirpstackClient) (*
 		return nil, errors.New("integration/mqtt: empty url|")
 	}
 
-	t := template.New("Person template")
+	t := template.New("mqtt topic template")
 	tem, err := t.Parse(config.TopicTemplate)
 	if err != nil {
 		return nil, err
@@ -47,10 +48,11 @@ func New(config config.MqttConfig, chirpstackClient *client.ChirpstackClient) (*
 	opts.SetUsername(config.Username)
 	opts.SetPassword(config.Password)
 	opts.SetClientID(config.ClientId)
-	opts.SetDefaultPublishHandler(messagePubHandler)
+	opts.SetDefaultPublishHandler(i.messagePubHandler)
 
 	i.conn = mqtt.NewClient(opts)
 	for {
+		log.Info("integration/mqtt: connecting to broker")
 		if token := i.conn.Connect(); token.Wait() && token.Error() != nil {
 			log.Errorf("integration/mqtt: connecting to broker error, will retry in 2s: %s", token.Error())
 			time.Sleep(2 * time.Second)
@@ -59,9 +61,9 @@ func New(config config.MqttConfig, chirpstackClient *client.ChirpstackClient) (*
 		}
 	}
 
-	if i.config.DownlinkTopicTemplate != "" {
-		log.Infof("integration/mqtt: subscribing to broker :%s", i.config.DownlinkTopicTemplate)
-		if token := i.conn.Subscribe(i.config.DownlinkTopicTemplate, 1, nil); token.Wait() && token.Error() != nil {
+	if i.config.DownlinkTopic != "" {
+		log.Infof("integration/mqtt: subscribing to broker :%s", i.config.DownlinkTopic)
+		if token := i.conn.Subscribe(i.config.DownlinkTopic, 1, nil); token.Wait() && token.Error() != nil {
 			log.Errorf("integration/mqtt: subscribing to broker error: %s", token.Error())
 			return i, token.Error()
 		}
@@ -70,10 +72,19 @@ func New(config config.MqttConfig, chirpstackClient *client.ChirpstackClient) (*
 	return i, nil
 }
 
-var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
+func (i *Integration) messagePubHandler(mqttclient mqtt.Client, msg mqtt.Message) {
+	if i.chirpstackClient != nil {
+		dqi := &client.DeviceQueueItem{}
+		err := json.Unmarshal(msg.Payload(), dqi)
+		if err != nil {
 
-	//{"data":"MDE=","fPort":2,"fCnt":1,"confirmed":false}
+		} else {
+			err = i.chirpstackClient.DownLink(dqi)
+			if err != nil {
 
+			}
+		}
+	}
 	fmt.Printf("Received message: %s from topic: %s\n", msg.Payload(), msg.Topic())
 }
 

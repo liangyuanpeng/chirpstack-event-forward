@@ -10,12 +10,10 @@ func Test_Downlink(t *testing.T) {
 	}
 
 	err = c.downLink(&DeviceQueueItem{
-		Confirmed:  false,
-		DevEUI:     "ffffff10000163cc",
-		FCnt:       1,
-		FPort:      2,
-		JsonObject: "json",
-		Data:       "MQ==",
+		Confirmed: false,
+		DevEUI:    "ffffff100003717d",
+		FPort:     36,
+		Data:      "MQ==",
 	})
 	if err != nil {
 		panic(err)
