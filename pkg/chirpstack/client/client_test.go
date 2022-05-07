@@ -3,7 +3,13 @@ package client
 import "testing"
 
 func Test_Downlink(t *testing.T) {
-	err := DownLink(&DeviceQueueItem{
+
+	c, err := New("", "")
+	if err != nil {
+		panic(err)
+	}
+
+	err = c.downLink(&DeviceQueueItem{
 		Confirmed:  false,
 		DevEUI:     "ffffff10000163cc",
 		FCnt:       1,

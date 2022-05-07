@@ -10,6 +10,7 @@ import (
 	"github.com/apache/pulsar-client-go/pulsar"
 	"github.com/liangyuanpeng/chirpstack-event-forward/internal/config"
 	"github.com/liangyuanpeng/chirpstack-event-forward/internal/integration"
+	"github.com/liangyuanpeng/chirpstack-event-forward/pkg/chirpstack/client"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -18,6 +19,7 @@ type Integration struct {
 	client               pulsar.Client
 	producers            sync.Map
 	producerNameTemplate *template.Template
+	chirpstackClient     *client.ChirpstackClient
 }
 
 type ProducerGroup struct {
@@ -25,7 +27,7 @@ type ProducerGroup struct {
 	sync.Mutex
 }
 
-func New(config config.PulsarConfig) (*Integration, error) {
+func New(config config.PulsarConfig, chirpstackClient *client.ChirpstackClient) (*Integration, error) {
 
 	t := template.New("Person template")
 	tem, err := t.Parse(config.TopicTemplate)
@@ -52,6 +54,7 @@ func New(config config.PulsarConfig) (*Integration, error) {
 		topicTemplate:        tem,
 		producers:            sync.Map{},
 		producerNameTemplate: tem2,
+		chirpstackClient:     chirpstackClient,
 	}
 	return i, nil
 }

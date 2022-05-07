@@ -17,6 +17,7 @@ import (
 	"github.com/liangyuanpeng/chirpstack-event-forward/internal/integration"
 	"github.com/liangyuanpeng/chirpstack-event-forward/internal/integration/mqtt"
 	"github.com/liangyuanpeng/chirpstack-event-forward/internal/integration/pulsar"
+	"github.com/liangyuanpeng/chirpstack-event-forward/pkg/chirpstack/client"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -97,9 +98,19 @@ func initConfig() {
 
 	initIntegration()
 
+	if config.C.Config[0].ChirpstackConfig.Url != "" && config.C.Config[0].ChirpstackConfig.ApiToken != "" {
+		c, err := client.New(config.C.Config[0].ChirpstackConfig.Url, config.C.Config[0].ChirpstackConfig.ApiToken)
+		if err != nil {
+			panic(err)
+		}
+		chirpstackClient = c
+	}
+
 }
 
 var integrations []integration.Integration
+
+var chirpstackClient *client.ChirpstackClient
 
 func initIntegration() {
 

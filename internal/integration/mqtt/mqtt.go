@@ -11,18 +11,20 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/liangyuanpeng/chirpstack-event-forward/internal/config"
 	"github.com/liangyuanpeng/chirpstack-event-forward/internal/integration"
+	"github.com/liangyuanpeng/chirpstack-event-forward/pkg/chirpstack/client"
 	log "github.com/sirupsen/logrus"
 )
 
 // Integration implements an Mqtt integration.
 type Integration struct {
-	conn          mqtt.Client
-	config        config.MqttConfig
-	topic         string
-	topicTemplate *template.Template
+	conn             mqtt.Client
+	config           config.MqttConfig
+	topic            string
+	topicTemplate    *template.Template
+	chirpstackClient *client.ChirpstackClient
 }
 
-func New(config config.MqttConfig) (*Integration, error) {
+func New(config config.MqttConfig, chirpstackClient *client.ChirpstackClient) (*Integration, error) {
 
 	if config.Enabled && config.Url == "" {
 		return nil, errors.New("integration/mqtt: empty url|")
@@ -35,8 +37,9 @@ func New(config config.MqttConfig) (*Integration, error) {
 	}
 
 	i := &Integration{
-		config:        config,
-		topicTemplate: tem,
+		config:           config,
+		topicTemplate:    tem,
+		chirpstackClient: chirpstackClient,
 	}
 
 	opts := mqtt.NewClientOptions()

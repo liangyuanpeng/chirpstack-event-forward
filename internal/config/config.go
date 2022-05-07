@@ -28,11 +28,12 @@ type ChirpstackConfig struct {
 	Account  string `yaml:"account"`
 	Password string `yaml:"password"`
 	Url      string `yaml:"url"`
+	ApiToken string `yaml:"apiToken"`
 }
 
 type IntegrationsConfig struct {
 	Mqtt   MqttConfig   `yaml:"mqtt"`
-	Pulsar PulsarConfig `yaml:pulsar`
+	Pulsar PulsarConfig `yaml:"pulsar"`
 }
 
 type MqttConfig struct {

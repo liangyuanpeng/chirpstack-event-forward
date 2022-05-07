@@ -24,9 +24,22 @@ type DeviceQueueItem struct {
 	JsonObject string `json:"jsonObject"`
 }
 
-func DownLink(deviceQueueItem *DeviceQueueItem) error {
-	url := ""
-	token := ""
+type ChirpstackClient struct {
+	Url      string
+	ApiToken string
+}
+
+func New(url, apitoken string) (*ChirpstackClient, error) {
+	if url == "" || apitoken == "" {
+		return nil, errors.New("url or apitoken is empty")
+	}
+	return &ChirpstackClient{
+		Url:      url,
+		ApiToken: apitoken,
+	}, nil
+}
+
+func (c *ChirpstackClient) downLink(deviceQueueItem *DeviceQueueItem) error {
 	song := make(map[string]interface{})
 	song["deviceQueueItem"] = deviceQueueItem
 
@@ -35,13 +48,13 @@ func DownLink(deviceQueueItem *DeviceQueueItem) error {
 		return err
 	}
 
-	request, err := http.NewRequest("POST", url+"/api/devices/"+deviceQueueItem.DevEUI+"/queue", bytes.NewReader(marshal))
+	request, err := http.NewRequest("POST", c.Url+"/api/devices/"+deviceQueueItem.DevEUI+"/queue", bytes.NewReader(marshal))
 	if err != nil {
 		fmt.Println(err.Error())
 		return err
 	}
 	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
-	request.Header.Set("Grpc-Metadata-Authorization", "Bearer "+token)
+	request.Header.Set("Grpc-Metadata-Authorization", "Bearer "+c.ApiToken)
 
 	resp, err := client.Do(request)
 	if err != nil {

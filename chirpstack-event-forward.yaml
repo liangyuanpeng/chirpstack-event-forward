@@ -4,15 +4,18 @@ general:
 config:
   - name: ""
     chirpstack:
-      account: ""
-      password: ""
+      apiToken: ""
       url: ""
     integrations:
       mqtt:
-        enabled: true
-        topicTemplate: "{{ .customername }}/application/{{ .appid }}/device/{{ .devEUI }}/{{ .event }}"
+        enabled: true  
+        topicTemplate: "application/{{ .appid }}/device/{{ .devEUI }}/{{ .event }}"
         url: ""
         clientId: ""
         qos: 1
         username: ""
         password: ""
+      pulsar:
+        enabled: false
+        topicTemplate: "application/{{ .appid }}/device/{{ .devEUI }}/{{ .event }}"
+        producerNameTemplate: "chirpstack-{{ .appid }}"
