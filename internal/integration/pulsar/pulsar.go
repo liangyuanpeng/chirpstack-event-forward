@@ -3,6 +3,7 @@ package pulsar
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"sync"
 	"text/template"
 	"time"
@@ -20,6 +21,9 @@ type Integration struct {
 	producers            sync.Map
 	producerNameTemplate *template.Template
 	chirpstackClient     *client.ChirpstackClient
+	ch                   chan integration.HandleError
+
+	consumer pulsar.Consumer
 }
 
 type ProducerGroup struct {
@@ -27,7 +31,38 @@ type ProducerGroup struct {
 	sync.Mutex
 }
 
-func New(config config.PulsarConfig, chirpstackClient *client.ChirpstackClient) (*Integration, error) {
+func (i *Integration) consumeDownlinkMessage() {
+	for {
+		msg, err := i.consumer.Receive(context.TODO())
+		if err != nil {
+			i.consumer.Nack(msg)
+			continue
+		}
+
+		dqi := &client.DeviceQueueItem{}
+		err = json.Unmarshal(msg.Payload(), dqi)
+		if err != nil {
+			i.ch <- integration.HandleError{
+				Err:  err,
+				Name: "pulsar",
+			}
+		} else {
+			err = i.chirpstackClient.DownLink(dqi)
+			if err != nil {
+				i.ch <- integration.HandleError{
+					Err:  err,
+					Name: "pulsar",
+				}
+				continue
+			}
+			i.consumer.Ack(msg)
+		}
+	}
+}
+
+func New(config config.PulsarConfig, opt *config.IntegrationOption) (*Integration, error) {
+
+	chirpstackClient := opt.ChirpstackClient
 
 	t := template.New("pulsar topic template")
 	tem, err := t.Parse(config.TopicTemplate)
@@ -50,15 +85,34 @@ func New(config config.PulsarConfig, chirpstackClient *client.ChirpstackClient) 
 		return nil, err
 	}
 
-	//TODO create consumer for downlink
-
 	i := &Integration{
 		client:               client,
 		topicTemplate:        tem,
 		producers:            sync.Map{},
 		producerNameTemplate: tem2,
 		chirpstackClient:     chirpstackClient,
+		ch:                   opt.Ch,
 	}
+
+	if chirpstackClient != nil {
+
+		if config.TopicsPattern == "" || config.ConsumerName == "" || config.SubscriptionName == "" {
+			log.Errorf("topicPattern/consumerName/subscriptionName is empty,please config it.")
+		} else {
+			consumer, err := client.Subscribe(pulsar.ConsumerOptions{
+				TopicsPattern:    config.TopicsPattern,
+				SubscriptionName: config.SubscriptionName,
+				Name:             config.ConsumerName,
+				Type:             pulsar.KeyShared,
+			})
+			if err != nil {
+				return nil, err
+			}
+			i.consumer = consumer
+			go i.consumeDownlinkMessage()
+		}
+	}
+
 	return i, nil
 }
 
@@ -114,6 +168,9 @@ func (i *Integration) HandleEvent(ctx context.Context, ch chan integration.Handl
 }
 
 func (i *Integration) Close() error {
+	if i.consumer != nil {
+		i.consumer.Close()
+	}
 	i.client.Close()
 	return nil
 }

@@ -20,5 +20,7 @@ config:
         enabled: false
         topicTemplate: "application/{{ .appid }}/device/{{ .devEUI }}/{{ .event }}"
         producerNameTemplate: "chirpstack-{{ .appid }}"
-        downlinkTopic: "downlink/commond/down"
+        topicsPattern: "downlink/commond/down"
+        consumerName: ""
+        subscriptionName: ""
 

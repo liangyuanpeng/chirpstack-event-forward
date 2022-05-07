@@ -1,5 +1,10 @@
 package config
 
+import (
+	"github.com/liangyuanpeng/chirpstack-event-forward/internal/integration"
+	"github.com/liangyuanpeng/chirpstack-event-forward/pkg/chirpstack/client"
+)
+
 var C RootConfig
 
 type RootConfig struct {
@@ -52,4 +57,12 @@ type PulsarConfig struct {
 	TopicTemplate        string `yaml:"topicTemplate"`
 	Url                  string `yaml:"url"`
 	ProducerNameTemplate string `yaml:"producerNameTemplate"`
+	TopicsPattern        string `yaml:"topicsPattern"`
+	SubscriptionName     string `yaml:"subscriptionName"`
+	ConsumerName         string `yaml:"consumerName"`
+}
+
+type IntegrationOption struct {
+	ChirpstackClient *client.ChirpstackClient
+	Ch               chan integration.HandleError
 }

@@ -23,9 +23,13 @@ type Integration struct {
 	topic            string
 	topicTemplate    *template.Template
 	chirpstackClient *client.ChirpstackClient
+
+	ch chan integration.HandleError
 }
 
-func New(config config.MqttConfig, chirpstackClient *client.ChirpstackClient) (*Integration, error) {
+func New(config config.MqttConfig, opt *config.IntegrationOption) (*Integration, error) {
+
+	chirpstackClient := opt.ChirpstackClient
 
 	if config.Enabled && config.Url == "" {
 		return nil, errors.New("integration/mqtt: empty url|")
@@ -41,6 +45,7 @@ func New(config config.MqttConfig, chirpstackClient *client.ChirpstackClient) (*
 		config:           config,
 		topicTemplate:    tem,
 		chirpstackClient: chirpstackClient,
+		ch:               opt.Ch,
 	}
 
 	opts := mqtt.NewClientOptions()
@@ -77,11 +82,17 @@ func (i *Integration) messagePubHandler(mqttclient mqtt.Client, msg mqtt.Message
 		dqi := &client.DeviceQueueItem{}
 		err := json.Unmarshal(msg.Payload(), dqi)
 		if err != nil {
-
+			i.ch <- integration.HandleError{
+				Err:  err,
+				Name: "mqtt",
+			}
 		} else {
 			err = i.chirpstackClient.DownLink(dqi)
 			if err != nil {
-
+				i.ch <- integration.HandleError{
+					Err:  err,
+					Name: "mqtt",
+				}
 			}
 		}
 	}

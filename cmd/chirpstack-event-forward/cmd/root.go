@@ -112,12 +112,19 @@ var integrations []integration.Integration
 
 var chirpstackClient *client.ChirpstackClient
 
+var ch = make(chan integration.HandleError)
+
 func initIntegration() {
 
 	//TODO async to init
 
+	opt := &config.IntegrationOption{
+		ChirpstackClient: chirpstackClient,
+		Ch:               ch,
+	}
+
 	if config.C.Config[0].Integrations.Mqtt.Enabled {
-		mqttI, err := mqtt.New(config.C.Config[0].Integrations.Mqtt, chirpstackClient)
+		mqttI, err := mqtt.New(config.C.Config[0].Integrations.Mqtt, opt)
 		if err != nil {
 			log.WithError(err).Fatalln("new mqtt integration failed!")
 		}
@@ -125,7 +132,7 @@ func initIntegration() {
 	}
 
 	if config.C.Config[0].Integrations.Pulsar.Enabled {
-		pulsarI, err := pulsar.New(config.C.Config[0].Integrations.Pulsar, chirpstackClient)
+		pulsarI, err := pulsar.New(config.C.Config[0].Integrations.Pulsar, opt)
 		if err == nil {
 			integrations = append(integrations, pulsarI)
 		} else {
@@ -175,8 +182,6 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go func() {
-
-		ch := make(chan integration.HandleError)
 
 		for _, i := range integrations {
 			name, err := i.HandleEvent(context.TODO(), ch, headerMap, b)
