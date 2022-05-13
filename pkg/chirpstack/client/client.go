@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -43,16 +42,28 @@ func (c *ChirpstackClient) DownLink(deviceQueueItem *DeviceQueueItem) error {
 	song := make(map[string]interface{})
 	song["deviceQueueItem"] = deviceQueueItem
 
+	log.Println("Received downlink event!", "device", deviceQueueItem.DevEUI)
+
 	marshal, err := json.Marshal(song)
 	if err != nil {
 		return err
 	}
 
-	request, err := http.NewRequest("POST", c.Url+"/api/devices/"+deviceQueueItem.DevEUI+"/queue", bytes.NewReader(marshal))
+	// simple retry once
+	if c.sendDownlinkRequest(deviceQueueItem.DevEUI, marshal) != nil {
+		return c.sendDownlinkRequest(deviceQueueItem.DevEUI, marshal)
+	}
+
+	return nil
+}
+
+func (c *ChirpstackClient) sendDownlinkRequest(devEUI string, data []byte) error {
+
+	request, err := http.NewRequest("POST", c.Url+"/api/devices/"+devEUI+"/queue", bytes.NewReader(data))
 	if err != nil {
-		fmt.Println(err.Error())
 		return err
 	}
+
 	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
 	request.Header.Set("Grpc-Metadata-Authorization", "Bearer "+c.Token)
 
@@ -70,7 +81,6 @@ func (c *ChirpstackClient) DownLink(deviceQueueItem *DeviceQueueItem) error {
 			if err != nil && err == io.EOF {
 				break
 			} else if err != nil {
-				// panic(err)
 				log.Println("write.resp.content.failed!", resp.StatusCode, err)
 				return err
 			}
