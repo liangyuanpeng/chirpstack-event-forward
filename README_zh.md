@@ -2,22 +2,28 @@
 
 [中文](README_zh.md)
 
-Forward chirpstack event data from chirpstack application http integration. Now we support pulsar and mqtt integration.
+chirpstack-event-forward是为了将chirpstack application server从HTTP集成方式转发出来的数据再次转发到更多的渠道.
+
+目前已经支持的转发:  
+
+- MQTT
+- Pulsar
 
 
-# Architecture
+
+# 架构
 
 ![Architecture](./docs/chirpstack-event-forward.png)
 
-# Deployment
+# 部署
 
 ## Kubernetes
 
 ## Helm Chart  
 
-Use chart from [chirpstack-event-forward](https://github.com/liangyuanpeng/charts/tree/main/chirpstack-event-forward).
+使用的helm charet 来自 [chirpstack-event-forward](https://github.com/liangyuanpeng/charts/tree/main/chirpstack-event-forward).
 
-require: helm v3
+前提条件：helm版本需要v3.
 
 ```
 helm repo add lyp https://liangyuanpeng.github.io/charts
@@ -25,7 +31,7 @@ helm repo update
 helm install lyp/chirpstack-event-forward
 ```
 
-And then you can get the running pod of chirpstack-event-forward.
+然后你就可以看到运行中的chirpstack-event-forward的pod了.  
 
 ```shell
 $ kubectl get po
