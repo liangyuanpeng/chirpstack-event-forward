@@ -20,7 +20,6 @@ import (
 type Integration struct {
 	conn             mqtt.Client
 	config           config.MqttConfig
-	topic            string
 	topicTemplate    *template.Template
 	chirpstackClient *client.ChirpstackClient
 
@@ -54,6 +53,7 @@ func New(config config.MqttConfig, opt *config.IntegrationOption) (*Integration,
 	opts.SetPassword(config.Password)
 	opts.SetClientID(config.ClientId)
 	opts.SetDefaultPublishHandler(i.messagePubHandler)
+	opts.SetAutoReconnect(true)
 
 	i.conn = mqtt.NewClient(opts)
 	for {
@@ -65,6 +65,7 @@ func New(config config.MqttConfig, opt *config.IntegrationOption) (*Integration,
 			break
 		}
 	}
+	log.Info("integration/mqtt: connected to broker")
 
 	if i.config.DownlinkTopic != "" {
 		log.Infof("integration/mqtt: subscribing to broker :%s", i.config.DownlinkTopic)
@@ -73,6 +74,7 @@ func New(config config.MqttConfig, opt *config.IntegrationOption) (*Integration,
 			return i, token.Error()
 		}
 	}
+	log.Info("integration/mqtt: subscribed to broker")
 
 	return i, nil
 }
@@ -101,12 +103,12 @@ func (i *Integration) messagePubHandler(mqttclient mqtt.Client, msg mqtt.Message
 
 func (i *Integration) HandleEvent(ctx context.Context, ch chan integration.HandleError, vars map[string]string, data []byte) (string, error) {
 
-	buf := new(bytes.Buffer)
-	i.topicTemplate.Execute(buf, vars)
+	topic := new(bytes.Buffer)
+	i.topicTemplate.Execute(topic, vars)
 
-	log.Infof("integration/mqtt: topic: %s", buf.Bytes())
+	log.Infof("integration/mqtt: topic: %s", topic.Bytes())
 
-	if token := i.conn.Publish(i.topic, i.config.QOS, false, data); token.Wait() && token.Error() != nil {
+	if token := i.conn.Publish(topic.String(), i.config.QOS, false, data); token.Wait() && token.Error() != nil {
 		return "mqtt", token.Error()
 	}
 	return "mqtt", nil
