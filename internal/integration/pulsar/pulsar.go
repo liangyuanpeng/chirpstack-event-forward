@@ -47,7 +47,7 @@ func (i *Integration) consumeDownlinkMessage() {
 				Name: "pulsar",
 			}
 		} else {
-			err = i.chirpstackClient.DownLink(dqi)
+			err = i.chirpstackClient.DownLink(context.TODO(), dqi)
 			if err != nil {
 				i.ch <- integration.HandleError{
 					Err:  err,
