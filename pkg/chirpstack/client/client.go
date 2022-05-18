@@ -40,19 +40,24 @@ func New(url, token string) (*ChirpstackClient, error) {
 }
 
 func (c *ChirpstackClient) DownLink(ctx context.Context, deviceQueueItem *DeviceQueueItem) error {
-	song := make(map[string]interface{})
-	song["deviceQueueItem"] = deviceQueueItem
+
+	if deviceQueueItem.DevEUI == "" {
+		return errors.New("downlink must be set devEUI")
+	}
+
+	reqdata := make(map[string]interface{})
+	reqdata["deviceQueueItem"] = deviceQueueItem
 
 	log.Println("Received downlink event!", "device", deviceQueueItem.DevEUI)
 
-	marshal, err := json.Marshal(song)
+	marshal, err := json.Marshal(reqdata)
 	if err != nil {
 		return err
 	}
 
 	// simple retry once
-	if c.sendDownlinkRequest(ctx,deviceQueueItem.DevEUI, marshal) != nil {
-		return c.sendDownlinkRequest(ctx,deviceQueueItem.DevEUI, marshal)
+	if c.sendDownlinkRequest(ctx, deviceQueueItem.DevEUI, marshal) != nil {
+		return c.sendDownlinkRequest(ctx, deviceQueueItem.DevEUI, marshal)
 	}
 
 	return nil

@@ -109,6 +109,8 @@ var ch = make(chan integration.HandleError)
 
 func initIntegration() {
 
+	log.Println("test","hello","world")
+
 	if config.C.Config[0].Chirpstack.Url != "" && config.C.Config[0].Chirpstack.ApiToken != "" {
 		c, err := client.New(config.C.Config[0].Chirpstack.Url, config.C.Config[0].Chirpstack.ApiToken)
 		if err != nil {
