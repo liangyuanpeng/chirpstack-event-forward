@@ -24,9 +24,9 @@ type HTTPConfig struct {
 }
 
 type ForwardConfig struct {
-	Name             string             `yaml:"name"`
-	ChirpstackConfig ChirpstackConfig   `yaml:"chirpstack"`
-	Integrations     IntegrationsConfig `yaml:"integrations"`
+	Name         string             `yaml:"name"`
+	Chirpstack   ChirpstackConfig   `yaml:"chirpstack"`
+	Integrations IntegrationsConfig `yaml:"integrations"`
 }
 
 type ChirpstackConfig struct {

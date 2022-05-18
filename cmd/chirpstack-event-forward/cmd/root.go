@@ -99,14 +99,6 @@ func initConfig() {
 
 	initIntegration()
 
-	if config.C.Config[0].ChirpstackConfig.Url != "" && config.C.Config[0].ChirpstackConfig.ApiToken != "" {
-		c, err := client.New(config.C.Config[0].ChirpstackConfig.Url, config.C.Config[0].ChirpstackConfig.ApiToken)
-		if err != nil {
-			panic(err)
-		}
-		chirpstackClient = c
-	}
-
 }
 
 var integrations []integration.Integration
@@ -117,8 +109,15 @@ var ch = make(chan integration.HandleError)
 
 func initIntegration() {
 
-	//TODO async to init
+	if config.C.Config[0].Chirpstack.Url != "" && config.C.Config[0].Chirpstack.ApiToken != "" {
+		c, err := client.New(config.C.Config[0].Chirpstack.Url, config.C.Config[0].Chirpstack.ApiToken)
+		if err != nil {
+			panic(err)
+		}
+		chirpstackClient = c
+	}
 
+	//TODO async to init
 	opt := &config.IntegrationOption{
 		ChirpstackClient: chirpstackClient,
 		Ch:               ch,
