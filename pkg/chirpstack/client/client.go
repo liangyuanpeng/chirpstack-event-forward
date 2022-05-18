@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -38,7 +39,7 @@ func New(url, token string) (*ChirpstackClient, error) {
 	}, nil
 }
 
-func (c *ChirpstackClient) DownLink(deviceQueueItem *DeviceQueueItem) error {
+func (c *ChirpstackClient) DownLink(ctx context.Context, deviceQueueItem *DeviceQueueItem) error {
 	song := make(map[string]interface{})
 	song["deviceQueueItem"] = deviceQueueItem
 
@@ -50,16 +51,16 @@ func (c *ChirpstackClient) DownLink(deviceQueueItem *DeviceQueueItem) error {
 	}
 
 	// simple retry once
-	if c.sendDownlinkRequest(deviceQueueItem.DevEUI, marshal) != nil {
-		return c.sendDownlinkRequest(deviceQueueItem.DevEUI, marshal)
+	if c.sendDownlinkRequest(ctx,deviceQueueItem.DevEUI, marshal) != nil {
+		return c.sendDownlinkRequest(ctx,deviceQueueItem.DevEUI, marshal)
 	}
 
 	return nil
 }
 
-func (c *ChirpstackClient) sendDownlinkRequest(devEUI string, data []byte) error {
+func (c *ChirpstackClient) sendDownlinkRequest(ctx context.Context, devEUI string, data []byte) error {
 
-	request, err := http.NewRequest("POST", c.Url+"/api/devices/"+devEUI+"/queue", bytes.NewReader(data))
+	request, err := http.NewRequestWithContext(ctx, "POST", c.Url+"/api/devices/"+devEUI+"/queue", bytes.NewReader(data))
 	if err != nil {
 		return err
 	}
@@ -87,6 +88,6 @@ func (c *ChirpstackClient) sendDownlinkRequest(devEUI string, data []byte) error
 		}
 		return errors.New(result.String())
 	}
-	log.Println("resp:", resp.StatusCode)
+	log.Println("sendDownlinkRequest", "statusCode", resp.StatusCode)
 	return nil
 }

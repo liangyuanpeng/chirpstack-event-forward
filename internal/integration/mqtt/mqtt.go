@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"html/template"
 	"time"
 
@@ -80,6 +79,7 @@ func New(config config.MqttConfig, opt *config.IntegrationOption) (*Integration,
 }
 
 func (i *Integration) messagePubHandler(mqttclient mqtt.Client, msg mqtt.Message) {
+	log.Println("Received downlink event!", "payload", msg.Payload(), "topic", msg.Topic())
 	if i.chirpstackClient != nil {
 		dqi := &client.DeviceQueueItem{}
 		err := json.Unmarshal(msg.Payload(), dqi)
@@ -89,7 +89,7 @@ func (i *Integration) messagePubHandler(mqttclient mqtt.Client, msg mqtt.Message
 				Name: "mqtt",
 			}
 		} else {
-			err = i.chirpstackClient.DownLink(dqi)
+			err = i.chirpstackClient.DownLink(context.TODO(), dqi)
 			if err != nil {
 				i.ch <- integration.HandleError{
 					Err:  err,
@@ -98,7 +98,6 @@ func (i *Integration) messagePubHandler(mqttclient mqtt.Client, msg mqtt.Message
 			}
 		}
 	}
-	fmt.Printf("Received message: %s from topic: %s\n", msg.Payload(), msg.Topic())
 }
 
 func (i *Integration) HandleEvent(ctx context.Context, ch chan integration.HandleError, vars map[string]string, data []byte) (string, error) {

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	_ "net/http/pprof"
 
 	asintegration "github.com/brocaar/chirpstack-api/go/v3/as/integration"
 	"github.com/gogo/protobuf/jsonpb"
@@ -140,6 +141,13 @@ func initIntegration() {
 		}
 	}
 
+	go func() {
+		for {
+			handleErr := <-ch
+			log.WithError(handleErr.Err).Println("handle event failed!", "name", handleErr.Name)
+		}
+	}()
+
 }
 
 type handler struct {
@@ -188,11 +196,6 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.WithError(err).Println("handle event failed!", "event", event, "name", name)
 			}
-		}
-
-		for {
-			handleErr := <-ch
-			log.WithError(handleErr.Err).Println("handle event failed!", "name", handleErr.Name)
 		}
 
 	}()
