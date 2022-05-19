@@ -1,6 +1,9 @@
 package client
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
 
 func Test_Downlink(t *testing.T) {
 
@@ -9,7 +12,7 @@ func Test_Downlink(t *testing.T) {
 		panic(err)
 	}
 
-	err = c.DownLink(&DeviceQueueItem{
+	err = c.DownLink(context.TODO(), &DeviceQueueItem{
 		Confirmed: false,
 		DevEUI:    "ffffff100003717d",
 		FPort:     36,

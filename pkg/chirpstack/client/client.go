@@ -48,7 +48,7 @@ func (c *ChirpstackClient) DownLink(ctx context.Context, deviceQueueItem *Device
 	reqdata := make(map[string]interface{})
 	reqdata["deviceQueueItem"] = deviceQueueItem
 
-	log.Println("Received downlink event!", "device", deviceQueueItem.DevEUI)
+	log.Println("send downlink request!", "device", deviceQueueItem.DevEUI)
 
 	marshal, err := json.Marshal(reqdata)
 	if err != nil {

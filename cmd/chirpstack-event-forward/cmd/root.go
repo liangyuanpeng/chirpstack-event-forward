@@ -105,11 +105,16 @@ var integrations []integration.Integration
 
 var chirpstackClient *client.ChirpstackClient
 
-var ch = make(chan integration.HandleError)
+var ch = make(chan integration.HandleError, 5)
 
 func initIntegration() {
 
-	log.Println("test","hello","world")
+	go func() {
+		for {
+			handleErr := <-ch
+			log.WithError(handleErr.Err).Println("handle event failed!", "name", handleErr.Name)
+		}
+	}()
 
 	if config.C.Config[0].Chirpstack.Url != "" && config.C.Config[0].Chirpstack.ApiToken != "" {
 		c, err := client.New(config.C.Config[0].Chirpstack.Url, config.C.Config[0].Chirpstack.ApiToken)
@@ -141,13 +146,6 @@ func initIntegration() {
 			log.WithError(err).Fatalln("new pulsar integration failed!")
 		}
 	}
-
-	go func() {
-		for {
-			handleErr := <-ch
-			log.WithError(handleErr.Err).Println("handle event failed!", "name", handleErr.Name)
-		}
-	}()
 
 }
 
@@ -190,16 +188,14 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go func() {
-
+	go func(headers map[string]string, data []byte) {
 		for _, i := range integrations {
-			name, err := i.HandleEvent(context.TODO(), ch, headerMap, b)
+			name, err := i.HandleEvent(context.TODO(), ch, headers, data)
 			if err != nil {
 				log.WithError(err).Println("handle event failed!", "event", event, "name", name)
 			}
 		}
-
-	}()
+	}(headerMap, b)
 
 }
 
