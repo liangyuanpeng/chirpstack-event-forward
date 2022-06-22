@@ -80,7 +80,7 @@ func New(config config.MqttConfig, opt *config.IntegrationOption) (*Integration,
 }
 
 func (i *Integration) messagePubHandler(mqttclient mqtt.Client, msg mqtt.Message) {
-	log.Println("Received downlink event!", "payload", string(msg.Payload()), "topic", msg.Topic())
+	log.Println("received downlink event!", "payload", string(msg.Payload()), "topic", msg.Topic())
 	if i.chirpstackClient != nil {
 		dqi := &client.DeviceQueueItem{}
 		err := json.Unmarshal(msg.Payload(), dqi)
