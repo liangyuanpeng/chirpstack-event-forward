@@ -53,6 +53,16 @@ func New(config config.MqttConfig, opt *config.IntegrationOption) (*Integration,
 	opts.SetClientID(config.ClientId)
 	opts.SetDefaultPublishHandler(i.messagePubHandler)
 	opts.SetAutoReconnect(true)
+	opts.SetOnConnectHandler(func(c mqtt.Client) {
+		log.Println("onconnect")
+		if i.config.DownlinkTopic != "" {
+			log.Infof("integration/mqtt: subscribing to broker :%s", i.config.DownlinkTopic)
+			if token := i.conn.Subscribe(i.config.DownlinkTopic, 1, i.messagePubHandler); token.Wait() && token.Error() != nil {
+				log.Errorf("integration/mqtt: subscribing to broker error: %s", token.Error())
+			}
+		}
+		log.Info("integration/mqtt: subscribed to broker")
+	})
 
 	i.conn = mqtt.NewClient(opts)
 	for {
@@ -65,15 +75,6 @@ func New(config config.MqttConfig, opt *config.IntegrationOption) (*Integration,
 		}
 	}
 	log.Info("integration/mqtt: connected to broker")
-
-	if i.config.DownlinkTopic != "" {
-		log.Infof("integration/mqtt: subscribing to broker :%s", i.config.DownlinkTopic)
-		if token := i.conn.Subscribe(i.config.DownlinkTopic, 1, nil); token.Wait() && token.Error() != nil {
-			log.Errorf("integration/mqtt: subscribing to broker error: %s", token.Error())
-			return i, token.Error()
-		}
-	}
-	log.Info("integration/mqtt: subscribed to broker")
 
 	return i, nil
 }
