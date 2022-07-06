@@ -149,7 +149,8 @@ func (i *Integration) HandleEvent(ctx context.Context, ch chan integration.Handl
 	}
 
 	pg.producer.SendAsync(context.TODO(), &pulsar.ProducerMessage{
-		Payload: data,
+		Payload:    data,
+		Properties: vars,
 	}, func(mi pulsar.MessageID, pm *pulsar.ProducerMessage, err error) {
 		if err != nil {
 			ch <- integration.HandleError{
