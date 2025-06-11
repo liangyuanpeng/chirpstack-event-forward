@@ -1,6 +1,6 @@
 module github.com/liangyuanpeng/chirpstack-event-forward
 
-go 1.22
+go 1.24
 
 require (
 	github.com/apache/pulsar-client-go v0.8.1
