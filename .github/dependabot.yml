@@ -3,10 +3,17 @@ updates:
   - package-ecosystem: gomod
     directory: "/"
     schedule:
-      interval: daily
+      interval: weekly
+    # Allow up to 10 open pull requests for update github-actions
+    # 5 by default
+    # see https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file#open-pull-requests-limit
+    open-pull-requests-limit: 30
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: daily
-    labels:
-      - "release-note-none"
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    
