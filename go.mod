@@ -1,11 +1,11 @@
 module github.com/liangyuanpeng/chirpstack-event-forward
 
-go 1.24
+go 1.24.0
 
 require (
 	github.com/apache/pulsar-client-go v0.8.1
 	github.com/brocaar/chirpstack-api/go/v3 v3.12.5
-	github.com/eclipse/paho.mqtt.golang v1.5.0
+	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.5.4
 	github.com/prometheus/client_golang v1.22.0
@@ -58,13 +58,13 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
-	golang.org/x/crypto v0.32.0 // indirect
-	golang.org/x/net v0.33.0 // indirect
+	golang.org/x/crypto v0.42.0 // indirect
+	golang.org/x/net v0.44.0 // indirect
 	golang.org/x/oauth2 v0.25.0 // indirect
-	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.30.0 // indirect
-	golang.org/x/term v0.28.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/term v0.35.0 // indirect
+	golang.org/x/text v0.29.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
